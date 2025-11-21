@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabric Calculator for Quilters & Sewers</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✂️ Fabric Calculator</h1>
+            <p class="subtitle">For Quilters & Sewers</p>
+        </header>
+
+        <!-- Calculator Mode Toggle -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="project-to-fabric">
+                Project → Fabric
+            </button>
+            <button class="mode-btn" data-mode="fabric-to-project">
+                Fabric → Projects
+            </button>
+        </div>
+
+        <!-- Project to Fabric Calculator -->
+        <div id="project-to-fabric" class="calculator-section active">
+            <h2>Calculate Fabric Needed</h2>
+            <p class="description">Select your project and enter dimensions to find out how much fabric you need.</p>
+
+            <div class="form-group">
+                <label for="project-type">Select Project Type:</label>
+                <select id="project-type" class="input-field">
+                    <option value="">-- Choose a Project --</option>
+                    <option value="jelly-roll-rug">Jelly Roll Rug</option>
+                    <option value="strip-quilt">Strip Quilt</option>
+                    <option value="basic-quilt">Basic Quilt (Squares)</option>
+                    <option value="tote-bag">Tote Bag</option>
+                    <option value="pillowcase">Pillowcase (Standard)</option>
+                    <option value="table-runner">Table Runner</option>
+                    <option value="baby-quilt">Baby Quilt</option>
+                    <option value="throw-pillow">Throw Pillow</option>
+                </select>
+            </div>
+
+            <div id="dimension-inputs" class="dimension-section"></div>
+
+            <button id="calculate-fabric" class="btn-primary" disabled>Calculate Fabric Needed</button>
+
+            <div id="fabric-results" class="results-section"></div>
+        </div>
+
+        <!-- Fabric to Projects Calculator -->
+        <div id="fabric-to-project" class="calculator-section">
+            <h2>What Can I Make?</h2>
+            <p class="description">Enter how much fabric you have to see what projects you can create.</p>
+
+            <div class="form-group">
+                <label for="fabric-amount-type">I have:</label>
+                <select id="fabric-amount-type" class="input-field">
+                    <option value="yards">Yards of Fabric</option>
+                    <option value="strips">2.5" Jelly Roll Strips</option>
+                    <option value="fat-quarters">Fat Quarters</option>
+                    <option value="charm-packs">5" Charm Squares</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="fabric-amount">Amount:</label>
+                <input type="number" id="fabric-amount" class="input-field" min="0.25" step="0.25" placeholder="Enter amount">
+            </div>
+
+            <div class="form-group">
+                <label for="desired-project">What would you like to make? (Optional)</label>
+                <select id="desired-project" class="input-field">
+                    <option value="">-- Show me everything! --</option>
+                    <option value="jelly-roll-rug">Jelly Roll Rug</option>
+                    <option value="strip-quilt">Strip Quilt</option>
+                    <option value="basic-quilt">Basic Quilt</option>
+                    <option value="tote-bag">Tote Bag</option>
+                    <option value="pillowcase">Pillowcase</option>
+                    <option value="table-runner">Table Runner</option>
+                    <option value="baby-quilt">Baby Quilt</option>
+                    <option value="throw-pillow">Throw Pillow</option>
+                </select>
+            </div>
+
+            <button id="find-projects" class="btn-primary">Find Projects</button>
+
+            <div id="project-results" class="results-section"></div>
+        </div>
+
+        <footer>
+            <p>💡 All calculations assume 44" wide quilting cotton and include a 10% waste buffer.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
