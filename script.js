@@ -4,6 +4,7 @@
 // Each project includes fabric requirements and calculations
 const FABRIC_WIDTH = 44; // Standard quilting cotton width in inches
 const WASTE_BUFFER = 1.10; // 10% buffer for waste and mistakes
+const SEAM_ALLOWANCE = 0.25; // 1/4" seam allowance
 
 const projects = {
     'jelly-roll-rug': {
@@ -11,11 +12,33 @@ const projects = {
         description: 'Coiled fabric rug made from 2.5" strips',
         difficulty: 'Beginner',
         dimensions: [
-            { id: 'diameter', label: 'Diameter (inches)', type: 'number', min: 12, default: 30 }
+            { id: 'shape', label: 'Rug Shape', type: 'select', options: [
+                { value: 'round', label: 'Round' },
+                { value: 'oval', label: 'Oval' },
+                { value: 'rectangle', label: 'Rectangle' }
+            ]}
         ],
         calculate: (inputs) => {
-            const diameter = inputs.diameter || 30;
-            const area = Math.PI * Math.pow(diameter / 2, 2);
+            const shape = inputs.shape || 'round';
+            let area, projectSize;
+
+            if (shape === 'round') {
+                const diameter = inputs.diameter || 30;
+                area = Math.PI * Math.pow(diameter / 2, 2);
+                projectSize = `${diameter}" diameter round rug`;
+            } else if (shape === 'oval') {
+                const width = inputs.width || 24;
+                const length = inputs.length || 36;
+                // Approximate oval area
+                area = Math.PI * (width / 2) * (length / 2);
+                projectSize = `${width}" × ${length}" oval rug`;
+            } else { // rectangle
+                const width = inputs.width || 24;
+                const length = inputs.length || 36;
+                area = width * length;
+                projectSize = `${width}" × ${length}" rectangular rug`;
+            }
+
             // Each strip is 2.5" wide by 44" long = 110 sq inches
             const stripArea = 2.5 * FABRIC_WIDTH;
             const stripsNeeded = Math.ceil((area / stripArea) * WASTE_BUFFER);
@@ -24,106 +47,27 @@ const projects = {
             return {
                 yards: yardsNeeded.toFixed(2),
                 strips: stripsNeeded,
-                fatQuarters: Math.ceil(stripsNeeded / 7), // ~7 strips per fat quarter
-                projectSize: `${diameter}" diameter rug`
+                fatQuarters: Math.ceil(stripsNeeded / 7),
+                projectSize: projectSize
             };
-        }
-    },
-    'strip-quilt': {
-        name: 'Strip Quilt',
-        description: 'Simple quilt made from strips sewn together',
-        difficulty: 'Beginner',
-        dimensions: [
-            { id: 'width', label: 'Width (inches)', type: 'number', min: 30, default: 60 },
-            { id: 'length', label: 'Length (inches)', type: 'number', min: 30, default: 72 }
-        ],
-        calculate: (inputs) => {
-            const width = inputs.width || 60;
-            const length = inputs.length || 72;
-            const area = width * length;
-            const yardsNeeded = ((area / (FABRIC_WIDTH * 36)) * WASTE_BUFFER).toFixed(2);
-            const strips = Math.ceil((length / 2.5) * (width / FABRIC_WIDTH) * WASTE_BUFFER);
-
-            return {
-                yards: yardsNeeded,
-                strips: strips,
-                fatQuarters: Math.ceil(strips / 7),
-                projectSize: `${width}" × ${length}" quilt`
-            };
-        }
-    },
-    'basic-quilt': {
-        name: 'Basic Quilt (Squares)',
-        description: 'Traditional quilt made from fabric squares',
-        difficulty: 'Intermediate',
-        dimensions: [
-            { id: 'width', label: 'Width (inches)', type: 'number', min: 30, default: 60 },
-            { id: 'length', label: 'Length (inches)', type: 'number', min: 30, default: 80 },
-            { id: 'squareSize', label: 'Square Size (inches)', type: 'number', min: 2, default: 5 }
-        ],
-        calculate: (inputs) => {
-            const width = inputs.width || 60;
-            const length = inputs.length || 80;
-            const squareSize = inputs.squareSize || 5;
-            const area = width * length;
-            const yardsNeeded = ((area / (FABRIC_WIDTH * 36)) * WASTE_BUFFER * 1.15).toFixed(2); // Extra for seams
-            const squaresNeeded = Math.ceil((width / squareSize) * (length / squareSize));
-
-            return {
-                yards: yardsNeeded,
-                squares: squaresNeeded,
-                fatQuarters: Math.ceil(yardsNeeded / 0.25),
-                projectSize: `${width}" × ${length}" quilt with ${squareSize}" squares`
-            };
-        }
-    },
-    'tote-bag': {
-        name: 'Tote Bag',
-        description: 'Reusable shopping or project tote',
-        difficulty: 'Beginner',
-        dimensions: [
-            { id: 'height', label: 'Height (inches)', type: 'number', min: 10, default: 14 },
-            { id: 'width', label: 'Width (inches)', type: 'number', min: 10, default: 16 }
-        ],
-        calculate: (inputs) => {
-            const height = inputs.height || 14;
-            const width = inputs.width || 16;
-            // Need front, back, bottom, handles, and lining
-            const yardsNeeded = (((height * 2 + width) * 2 + 20) / 36 * WASTE_BUFFER).toFixed(2);
-
-            return {
-                yards: yardsNeeded,
-                fatQuarters: Math.ceil(yardsNeeded / 0.5),
-                projectSize: `${width}" × ${height}" tote bag`
-            };
-        }
-    },
-    'pillowcase': {
-        name: 'Pillowcase (Standard)',
-        description: 'Standard bed pillowcase',
-        difficulty: 'Beginner',
-        dimensions: [
-            { id: 'size', label: 'Pillow Size', type: 'select', options: [
-                { value: 'standard', label: 'Standard (20" × 26")', yards: 0.75 },
-                { value: 'queen', label: 'Queen (20" × 30")', yards: 0.9 },
-                { value: 'king', label: 'King (20" × 36")', yards: 1.1 }
-            ]}
-        ],
-        calculate: (inputs) => {
-            const sizeData = {
-                'standard': { yards: 0.75, size: '20" × 26"' },
-                'queen': { yards: 0.9, size: '20" × 30"' },
-                'king': { yards: 1.1, size: '20" × 36"' }
-            };
-            const size = inputs.size || 'standard';
-            const data = sizeData[size];
-            const yardsNeeded = (data.yards * WASTE_BUFFER).toFixed(2);
-
-            return {
-                yards: yardsNeeded,
-                fatQuarters: Math.ceil(yardsNeeded / 0.5),
-                projectSize: `${data.size} pillowcase`
-            };
+        },
+        // Dynamic dimensions based on shape selection
+        getDynamicDimensions: (shape) => {
+            if (shape === 'round') {
+                return [
+                    { id: 'diameter', label: 'Diameter (inches)', type: 'number', min: 12, default: 30 }
+                ];
+            } else if (shape === 'oval') {
+                return [
+                    { id: 'width', label: 'Width (inches)', type: 'number', min: 12, default: 24 },
+                    { id: 'length', label: 'Length (inches)', type: 'number', min: 12, default: 36 }
+                ];
+            } else { // rectangle
+                return [
+                    { id: 'width', label: 'Width (inches)', type: 'number', min: 12, default: 24 },
+                    { id: 'length', label: 'Length (inches)', type: 'number', min: 12, default: 36 }
+                ];
+            }
         }
     },
     'table-runner': {
@@ -137,7 +81,8 @@ const projects = {
         calculate: (inputs) => {
             const length = inputs.length || 72;
             const width = inputs.width || 16;
-            const yardsNeeded = ((length / 36) * WASTE_BUFFER * 1.2).toFixed(2); // Extra for backing
+            // Need fabric for top and backing
+            const yardsNeeded = ((length / 36) * 2 * WASTE_BUFFER).toFixed(2);
 
             return {
                 yards: yardsNeeded,
@@ -146,32 +91,187 @@ const projects = {
             };
         }
     },
-    'baby-quilt': {
-        name: 'Baby Quilt',
-        description: 'Perfect size for a baby or toddler',
-        difficulty: 'Beginner',
+    'wall-hanging': {
+        name: 'Wall Hanging',
+        description: 'Decorative quilted wall art',
+        difficulty: 'Intermediate',
         dimensions: [
-            { id: 'size', label: 'Baby Quilt Size', type: 'select', options: [
-                { value: 'small', label: 'Small (30" × 40")', width: 30, length: 40 },
-                { value: 'medium', label: 'Medium (36" × 52")', width: 36, length: 52 },
-                { value: 'large', label: 'Large (42" × 52")', width: 42, length: 52 }
-            ]}
+            { id: 'width', label: 'Width (inches)', type: 'number', min: 12, default: 24 },
+            { id: 'height', label: 'Height (inches)', type: 'number', min: 12, default: 36 }
         ],
         calculate: (inputs) => {
-            const sizes = {
-                'small': { width: 30, length: 40 },
-                'medium': { width: 36, length: 52 },
-                'large': { width: 42, length: 52 }
-            };
-            const size = inputs.size || 'medium';
-            const dims = sizes[size];
-            const area = dims.width * dims.length;
-            const yardsNeeded = ((area / (FABRIC_WIDTH * 36)) * WASTE_BUFFER * 1.5).toFixed(2); // Extra for backing and binding
+            const width = inputs.width || 24;
+            const height = inputs.height || 36;
+            const area = width * height;
+            // Need top, backing, and binding
+            const yardsNeeded = ((area / (FABRIC_WIDTH * 36)) * 2 * WASTE_BUFFER * 1.2).toFixed(2);
 
             return {
                 yards: yardsNeeded,
                 fatQuarters: Math.ceil(yardsNeeded / 0.5),
-                projectSize: `${dims.width}" × ${dims.length}" baby quilt`
+                projectSize: `${width}" × ${height}" wall hanging`
+            };
+        }
+    },
+    'tote-bag': {
+        name: 'Tote Bag',
+        description: 'Reusable shopping or project tote',
+        difficulty: 'Beginner',
+        dimensions: [
+            { id: 'height', label: 'Height (inches)', type: 'number', min: 10, default: 14 },
+            { id: 'width', label: 'Width (inches)', type: 'number', min: 10, default: 16 },
+            { id: 'depth', label: 'Depth/Gusset (inches)', type: 'number', min: 2, default: 4 }
+        ],
+        calculate: (inputs) => {
+            const height = inputs.height || 14;
+            const width = inputs.width || 16;
+            const depth = inputs.depth || 4;
+
+            // Calculate fabric needed: 2 body pieces + 2 side gussets + bottom + handles
+            const bodyArea = (width + depth) * 2 * (height + depth + 2); // Front, back, sides, bottom with seam allowances
+            const handleLength = 20; // Standard handle length
+
+            const exteriorYards = ((bodyArea + (handleLength * 4)) / (FABRIC_WIDTH * 36) * WASTE_BUFFER).toFixed(2);
+            const liningYards = ((bodyArea) / (FABRIC_WIDTH * 36) * WASTE_BUFFER).toFixed(2);
+            const interfacingYards = exteriorYards; // Same as exterior
+            const totalYards = (parseFloat(exteriorYards) + parseFloat(liningYards)).toFixed(2);
+
+            return {
+                yards: totalYards,
+                exteriorYards: exteriorYards,
+                liningYards: liningYards,
+                interfacingYards: interfacingYards,
+                projectSize: `${width}" × ${height}" × ${depth}" tote bag`,
+                hasLining: true,
+                hasInterfacing: true
+            };
+        }
+    },
+    'zippered-pouch': {
+        name: 'Zippered Pouch',
+        description: 'Flat zippered pouch for storage',
+        difficulty: 'Beginner',
+        dimensions: [
+            { id: 'width', label: 'Width (inches)', type: 'number', min: 4, default: 9 },
+            { id: 'height', label: 'Height (inches)', type: 'number', min: 4, default: 7 }
+        ],
+        calculate: (inputs) => {
+            const width = inputs.width || 9;
+            const height = inputs.height || 7;
+
+            // Need 2 exterior pieces and 2 lining pieces
+            const pieceWidth = width + (2 * SEAM_ALLOWANCE);
+            const pieceHeight = height + (2 * SEAM_ALLOWANCE);
+
+            const exteriorYards = ((pieceWidth * pieceHeight * 2) / (FABRIC_WIDTH * 36) * WASTE_BUFFER).toFixed(2);
+            const liningYards = exteriorYards; // Same dimensions
+            const interfacingYards = exteriorYards;
+            const totalYards = (parseFloat(exteriorYards) + parseFloat(liningYards)).toFixed(2);
+
+            return {
+                yards: totalYards,
+                exteriorYards: exteriorYards,
+                liningYards: liningYards,
+                interfacingYards: interfacingYards,
+                projectSize: `${width}" × ${height}" zippered pouch`,
+                hasLining: true,
+                hasInterfacing: true
+            };
+        }
+    },
+    'boxy-pouch': {
+        name: 'Boxy Pouch',
+        description: 'Three-dimensional zippered pouch',
+        difficulty: 'Intermediate',
+        dimensions: [
+            { id: 'width', label: 'Width (inches)', type: 'number', min: 4, default: 8 },
+            { id: 'height', label: 'Height (inches)', type: 'number', min: 4, default: 6 },
+            { id: 'depth', label: 'Depth (inches)', type: 'number', min: 2, default: 3 }
+        ],
+        calculate: (inputs) => {
+            const width = inputs.width || 8;
+            const height = inputs.height || 6;
+            const depth = inputs.depth || 3;
+
+            // Calculate surface area for boxy pouch
+            const surfaceArea = 2 * ((width * height) + (width * depth) + (height * depth));
+
+            const exteriorYards = ((surfaceArea) / (FABRIC_WIDTH * 36) * WASTE_BUFFER).toFixed(2);
+            const liningYards = exteriorYards;
+            const interfacingYards = exteriorYards;
+            const totalYards = (parseFloat(exteriorYards) + parseFloat(liningYards)).toFixed(2);
+
+            return {
+                yards: totalYards,
+                exteriorYards: exteriorYards,
+                liningYards: liningYards,
+                interfacingYards: interfacingYards,
+                projectSize: `${width}" × ${height}" × ${depth}" boxy pouch`,
+                hasLining: true,
+                hasInterfacing: true
+            };
+        }
+    },
+    'duffle-bag': {
+        name: 'Duffle Bag',
+        description: 'Large cylindrical travel bag',
+        difficulty: 'Advanced',
+        dimensions: [
+            { id: 'diameter', label: 'Diameter (inches)', type: 'number', min: 8, default: 10 },
+            { id: 'length', label: 'Length (inches)', type: 'number', min: 12, default: 20 }
+        ],
+        calculate: (inputs) => {
+            const diameter = inputs.diameter || 10;
+            const length = inputs.length || 20;
+            const radius = diameter / 2;
+
+            // Calculate cylinder surface area: 2 circles + rectangle
+            const circleArea = 2 * Math.PI * radius * radius;
+            const bodyArea = 2 * Math.PI * radius * length;
+            const totalArea = circleArea + bodyArea;
+
+            // Add extra for straps and pockets
+            const exteriorYards = ((totalArea + 200) / (FABRIC_WIDTH * 36) * WASTE_BUFFER).toFixed(2);
+            const liningYards = ((totalArea) / (FABRIC_WIDTH * 36) * WASTE_BUFFER).toFixed(2);
+            const interfacingYards = exteriorYards;
+            const totalYards = (parseFloat(exteriorYards) + parseFloat(liningYards)).toFixed(2);
+
+            return {
+                yards: totalYards,
+                exteriorYards: exteriorYards,
+                liningYards: liningYards,
+                interfacingYards: interfacingYards,
+                projectSize: `${diameter}" diameter × ${length}" long duffle bag`,
+                hasLining: true,
+                hasInterfacing: true
+            };
+        }
+    },
+    'pillowcase': {
+        name: 'Pillowcase',
+        description: 'Standard bed pillowcase',
+        difficulty: 'Beginner',
+        dimensions: [
+            { id: 'size', label: 'Pillow Size', type: 'select', options: [
+                { value: 'standard', label: 'Standard (20" × 26")' },
+                { value: 'queen', label: 'Queen (20" × 30")' },
+                { value: 'king', label: 'King (20" × 36")' }
+            ]}
+        ],
+        calculate: (inputs) => {
+            const sizeData = {
+                'standard': { width: 20, length: 26, yards: 0.75 },
+                'queen': { width: 20, length: 30, yards: 0.9 },
+                'king': { width: 20, length: 36, yards: 1.1 }
+            };
+            const size = inputs.size || 'standard';
+            const data = sizeData[size];
+            const yardsNeeded = (data.yards * WASTE_BUFFER).toFixed(2);
+
+            return {
+                yards: yardsNeeded,
+                fatQuarters: Math.ceil(yardsNeeded / 0.5),
+                projectSize: `${data.width}" × ${data.length}" pillowcase`
             };
         }
     },
@@ -180,17 +280,171 @@ const projects = {
         description: 'Decorative pillow cover',
         difficulty: 'Beginner',
         dimensions: [
-            { id: 'size', label: 'Pillow Size (inches)', type: 'number', min: 12, default: 18 }
+            { id: 'size', label: 'Pillow Size', type: 'select', options: [
+                { value: '12', label: '12" × 12"' },
+                { value: '16', label: '16" × 16"' },
+                { value: '18', label: '18" × 18"' },
+                { value: '20', label: '20" × 20"' },
+                { value: '24', label: '24" × 24"' }
+            ]}
         ],
         calculate: (inputs) => {
-            const size = inputs.size || 18;
+            const size = parseInt(inputs.size) || 18;
             // Need front and back
-            const yardsNeeded = (((size * 2) / 36) * WASTE_BUFFER).toFixed(2);
+            const yardsNeeded = (((size + SEAM_ALLOWANCE * 2) * 2 / 36) * WASTE_BUFFER).toFixed(2);
 
             return {
                 yards: yardsNeeded,
-                fatQuarters: 1,
+                fatQuarters: Math.ceil(parseFloat(yardsNeeded) / 0.5),
                 projectSize: `${size}" × ${size}" throw pillow`
+            };
+        }
+    },
+    'placemat': {
+        name: 'Placemat',
+        description: 'Individual table placemat',
+        difficulty: 'Beginner',
+        dimensions: [
+            { id: 'size', label: 'Placemat Size', type: 'select', options: [
+                { value: 'standard', label: 'Standard (12" × 18")' },
+                { value: 'large', label: 'Large (14" × 20")' }
+            ]},
+            { id: 'quantity', label: 'Number of Placemats', type: 'number', min: 1, default: 4 }
+        ],
+        calculate: (inputs) => {
+            const sizeData = {
+                'standard': { width: 12, height: 18 },
+                'large': { width: 14, height: 20 }
+            };
+            const size = inputs.size || 'standard';
+            const quantity = inputs.quantity || 4;
+            const dims = sizeData[size];
+
+            // Each placemat needs top and backing
+            const areaPerMat = dims.width * dims.height * 2;
+            const totalArea = areaPerMat * quantity;
+            const yardsNeeded = ((totalArea / (FABRIC_WIDTH * 36)) * WASTE_BUFFER).toFixed(2);
+
+            return {
+                yards: yardsNeeded,
+                fatQuarters: Math.ceil(parseFloat(yardsNeeded) / 0.5),
+                projectSize: `${quantity} placemats (${dims.width}" × ${dims.height}" each)`
+            };
+        }
+    },
+    'napkin': {
+        name: 'Napkin',
+        description: 'Fabric table napkins',
+        difficulty: 'Beginner',
+        dimensions: [
+            { id: 'size', label: 'Napkin Size', type: 'select', options: [
+                { value: 'cocktail', label: 'Cocktail (12" × 12")' },
+                { value: 'dinner-small', label: 'Dinner Small (17" × 17")' },
+                { value: 'dinner-large', label: 'Dinner Large (20" × 20")' }
+            ]},
+            { id: 'quantity', label: 'Number of Napkins', type: 'number', min: 1, default: 6 }
+        ],
+        calculate: (inputs) => {
+            const sizeData = {
+                'cocktail': { size: 12 },
+                'dinner-small': { size: 17 },
+                'dinner-large': { size: 20 }
+            };
+            const sizeKey = inputs.size || 'dinner-small';
+            const quantity = inputs.quantity || 6;
+            const size = sizeData[sizeKey].size;
+
+            // Add seam allowance for hem
+            const fabricSize = size + 1; // Add 1" for hems
+            const areaPerNapkin = fabricSize * fabricSize;
+            const totalArea = areaPerNapkin * quantity;
+            const yardsNeeded = ((totalArea / (FABRIC_WIDTH * 36)) * WASTE_BUFFER).toFixed(2);
+
+            return {
+                yards: yardsNeeded,
+                fatQuarters: Math.ceil(parseFloat(yardsNeeded) / 0.5),
+                projectSize: `${quantity} napkins (${size}" × ${size}" each)`
+            };
+        }
+    },
+    'fabric-basket': {
+        name: 'Fabric Basket',
+        description: 'Storage basket with interfacing',
+        difficulty: 'Intermediate',
+        dimensions: [
+            { id: 'size', label: 'Basket Size', type: 'select', options: [
+                { value: 'small-square', label: 'Small Square (6" × 6" × 6")' },
+                { value: 'medium-square', label: 'Medium Square (10" × 10" × 8")' },
+                { value: 'large-square', label: 'Large Square (12" × 12" × 10")' },
+                { value: 'small-rect', label: 'Small Rectangular (8" × 6" × 4")' },
+                { value: 'medium-rect', label: 'Medium Rectangular (12" × 8" × 6")' },
+                { value: 'large-rect', label: 'Large Rectangular (16" × 10" × 8")' },
+                { value: 'xlarge-rect', label: 'Extra Large Rectangular (18" × 12" × 10")' }
+            ]}
+        ],
+        calculate: (inputs) => {
+            const sizeData = {
+                'small-square': { width: 6, length: 6, height: 6 },
+                'medium-square': { width: 10, length: 10, height: 8 },
+                'large-square': { width: 12, length: 12, height: 10 },
+                'small-rect': { width: 8, length: 6, height: 4 },
+                'medium-rect': { width: 12, length: 8, height: 6 },
+                'large-rect': { width: 16, length: 10, height: 8 },
+                'xlarge-rect': { width: 18, length: 12, height: 10 }
+            };
+            const size = inputs.size || 'medium-square';
+            const dims = sizeData[size];
+
+            // Calculate surface area: bottom + 4 sides
+            const surfaceArea = (dims.width * dims.length) +
+                               (2 * dims.width * dims.height) +
+                               (2 * dims.length * dims.height);
+
+            const exteriorYards = ((surfaceArea) / (FABRIC_WIDTH * 36) * WASTE_BUFFER).toFixed(2);
+            const liningYards = exteriorYards;
+            const interfacingYards = exteriorYards;
+            const totalYards = (parseFloat(exteriorYards) + parseFloat(liningYards)).toFixed(2);
+
+            return {
+                yards: totalYards,
+                exteriorYards: exteriorYards,
+                liningYards: liningYards,
+                interfacingYards: interfacingYards,
+                projectSize: `${dims.width}" × ${dims.length}" × ${dims.height}" fabric basket`,
+                hasLining: true,
+                hasInterfacing: true
+            };
+        }
+    },
+    'ruffle': {
+        name: 'Ruffle',
+        description: 'Gathered fabric ruffle trim',
+        difficulty: 'Beginner',
+        dimensions: [
+            { id: 'width', label: 'Finished Ruffle Width/Height (inches)', type: 'number', min: 1, default: 3 },
+            { id: 'length', label: 'Finished Ruffle Length (inches)', type: 'number', min: 12, default: 60 },
+            { id: 'gathering', label: 'Gathering Amount', type: 'select', options: [
+                { value: '1.5', label: 'Light Gathering (1.5x)' },
+                { value: '2', label: 'Normal Gathering (2x)' },
+                { value: '2.5', label: 'Extra Gathering (2.5x)' }
+            ]}
+        ],
+        calculate: (inputs) => {
+            const width = inputs.width || 3;
+            const length = inputs.length || 60;
+            const gatherMultiplier = parseFloat(inputs.gathering) || 2;
+
+            // Calculate fabric needed
+            const fabricLength = length * gatherMultiplier;
+            const fabricWidth = width + 0.5; // Add 1/2" for seam allowances
+
+            const yardsNeeded = ((fabricLength / 36) * WASTE_BUFFER).toFixed(2);
+
+            return {
+                yards: yardsNeeded,
+                startingDimensions: `${fabricWidth.toFixed(1)}" wide × ${fabricLength.toFixed(0)}" long`,
+                projectSize: `${width}" wide × ${length}" long finished ruffle with ${gatherMultiplier}x gathering`,
+                fatQuarters: Math.ceil(parseFloat(yardsNeeded) / 0.5)
             };
         }
     }
@@ -260,8 +514,7 @@ modeButtons.forEach(button => {
 // ==========================================
 // PROJECT-TO-FABRIC CALCULATOR
 // ==========================================
-projectTypeSelect.addEventListener('change', function() {
-    const projectKey = this.value;
+function renderDimensionInputs(projectKey, additionalData = {}) {
     dimensionInputs.innerHTML = '';
     fabricResults.innerHTML = '';
 
@@ -273,8 +526,16 @@ projectTypeSelect.addEventListener('change', function() {
     const project = projects[projectKey];
     calculateFabricBtn.disabled = false;
 
+    let dimensions = project.dimensions;
+
+    // Handle dynamic dimensions (like Jelly Roll Rug shapes)
+    if (project.getDynamicDimensions && additionalData.shape) {
+        const dynamicDims = project.getDynamicDimensions(additionalData.shape);
+        dimensions = [project.dimensions[0], ...dynamicDims]; // Keep shape selector + add dynamic dims
+    }
+
     // Generate dimension input fields based on project
-    project.dimensions.forEach(dim => {
+    dimensions.forEach(dim => {
         const formGroup = document.createElement('div');
         formGroup.className = 'dimension-group';
 
@@ -295,6 +556,13 @@ projectTypeSelect.addEventListener('change', function() {
                 select.appendChild(opt);
             });
 
+            // Special handling for Jelly Roll Rug shape changes
+            if (projectKey === 'jelly-roll-rug' && dim.id === 'shape') {
+                select.addEventListener('change', function() {
+                    renderDimensionInputs(projectKey, { shape: this.value });
+                });
+            }
+
             formGroup.appendChild(select);
         } else {
             const input = document.createElement('input');
@@ -311,6 +579,10 @@ projectTypeSelect.addEventListener('change', function() {
 
         dimensionInputs.appendChild(formGroup);
     });
+}
+
+projectTypeSelect.addEventListener('change', function() {
+    renderDimensionInputs(this.value);
 });
 
 calculateFabricBtn.addEventListener('click', function() {
@@ -320,51 +592,109 @@ calculateFabricBtn.addEventListener('click', function() {
     const project = projects[projectKey];
     const inputs = {};
 
-    // Collect input values
-    project.dimensions.forEach(dim => {
-        const element = document.getElementById(dim.id);
-        inputs[dim.id] = dim.type === 'number' ? parseFloat(element.value) : element.value;
+    // Collect input values from all visible inputs
+    const allInputs = dimensionInputs.querySelectorAll('input, select');
+    allInputs.forEach(element => {
+        const id = element.id;
+        if (element.type === 'number') {
+            inputs[id] = parseFloat(element.value) || 0;
+        } else {
+            inputs[id] = element.value;
+        }
     });
 
     // Calculate fabric needs
     const results = project.calculate(inputs);
 
-    // Display results
-    fabricResults.innerHTML = `
+    // Build results HTML
+    let resultsHTML = `
         <div class="result-card">
             <h3>📏 ${project.name}</h3>
             <div class="result-item">
                 <span class="result-label">Project Size:</span>
                 <span class="result-value">${results.projectSize}</span>
             </div>
+    `;
+
+    // If project has lining/exterior separation
+    if (results.hasLining) {
+        resultsHTML += `
             <div class="result-item">
-                <span class="result-label">Fabric Needed (44" wide):</span>
-                <span class="result-value">${results.yards} yards</span>
+                <span class="result-label">Exterior Fabric:</span>
+                <span class="result-value">${results.exteriorYards} yards</span>
             </div>
-            ${results.strips ? `
+            <div class="result-item">
+                <span class="result-label">Lining Fabric:</span>
+                <span class="result-value">${results.liningYards} yards</span>
+            </div>
+        `;
+    }
+
+    // If project has interfacing
+    if (results.hasInterfacing) {
+        resultsHTML += `
+            <div class="result-item">
+                <span class="result-label">Interfacing:</span>
+                <span class="result-value">${results.interfacingYards} yards</span>
+            </div>
+        `;
+    }
+
+    // Total yards
+    resultsHTML += `
+        <div class="result-item">
+            <span class="result-label">${results.hasLining ? 'Total Fabric (Exterior + Lining):' : 'Fabric Needed (44" wide):'}</span>
+            <span class="result-value">${results.yards} yards</span>
+        </div>
+    `;
+
+    // Ruffle starting dimensions
+    if (results.startingDimensions) {
+        resultsHTML += `
+            <div class="result-item">
+                <span class="result-label">Starting Fabric Dimensions:</span>
+                <span class="result-value">${results.startingDimensions}</span>
+            </div>
+        `;
+    }
+
+    // Optional additional info
+    if (results.strips) {
+        resultsHTML += `
             <div class="result-item">
                 <span class="result-label">OR 2.5" Jelly Roll Strips:</span>
                 <span class="result-value">${results.strips} strips</span>
             </div>
-            ` : ''}
-            ${results.fatQuarters ? `
+        `;
+    }
+
+    if (results.fatQuarters) {
+        resultsHTML += `
             <div class="result-item">
                 <span class="result-label">OR Fat Quarters:</span>
                 <span class="result-value">${results.fatQuarters} fat quarters</span>
             </div>
-            ` : ''}
-            ${results.squares ? `
+        `;
+    }
+
+    if (results.squares) {
+        resultsHTML += `
             <div class="result-item">
                 <span class="result-label">Total Squares Needed:</span>
                 <span class="result-value">${results.squares} squares</span>
             </div>
-            ` : ''}
+        `;
+    }
+
+    resultsHTML += `
             <div class="result-item">
                 <span class="result-label">Difficulty Level:</span>
                 <span class="result-value">${project.difficulty}</span>
             </div>
         </div>
     `;
+
+    fabricResults.innerHTML = resultsHTML;
 
     // Scroll to results
     fabricResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -487,5 +817,5 @@ fabricAmount.addEventListener('input', function() {
 // ==========================================
 // INITIALIZE
 // ==========================================
-console.log('🧵 Fabric Calculator loaded successfully!');
+console.log('🧵 Fabric Planner loaded successfully!');
 console.log(`📐 Assuming ${FABRIC_WIDTH}" wide fabric with ${(WASTE_BUFFER - 1) * 100}% waste buffer`);
